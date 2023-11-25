@@ -54,6 +54,6 @@
 
 （只是目前收集的部分）
 
-1. [](https://web.mit.edu/6.005/www/fa13/projects/whiteboard/)
-2. [](https://github.com/lovasoa/whitebophir)
-3. [](https://wesbos.com/html5-canvas-websockets-nodejs)
+1. https://web.mit.edu/6.005/www/fa13/projects/whiteboard/
+2. https://github.com/lovasoa/whitebophir
+3. https://wesbos.com/html5-canvas-websockets-nodejs
