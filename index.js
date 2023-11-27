@@ -63,13 +63,13 @@ io.on('connection', (socket) => {
         });
     });
 
-    // socket.on('reset', (data) => {
-    //     connections.forEach((con) => {
-    //         if (con.id !== socket.id) {
-    //             con.emit('onreset');
-    //         }
-    //     });
-    // });
+    socket.on('reset', (data) => {
+        connections.forEach((con) => {
+            if (con.id !== socket.id) {
+                con.emit('onreset');
+            }
+        });
+    });
 
     socket.on('disconnect', (reason) => {
         console.log(`${socket.id} is disconnected`);
