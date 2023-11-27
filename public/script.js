@@ -1,7 +1,7 @@
 let canvas = document.getElementById('board');
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = 0.9 * window.innerWidth;
+canvas.height = 0.9 * window.innerHeight;
 let ctx = canvas.getContext("2d");
 
 var io = io().connect('http://localhost:8080')
@@ -19,7 +19,7 @@ let rectangleButton = getButton('rectangleButton');
 let circleButton = getButton('circleButton');
 let textButton = getButton('textButton');
 let eraserButton = getButton('eraserButton');
-// let resetButton = getButton('resetButton');
+let resetButton = getButton('resetButton');
 
 
 /*
@@ -41,6 +41,18 @@ let rect = canvas.getBoundingClientRect();
 addClickEventListner for buttons
 ===========================
 */
+document.addEventListener('DOMContentLoaded', function () {
+    let buttons = document.querySelectorAll('.button');
+    buttons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            buttons.forEach(function (btn) {
+                btn.classList.remove('selected');
+            });
+            this.classList.add('selected');
+        });
+    });
+});
+
 function addDrawModeChangeEvent(btt, method) {
     btt.addEventListener('click', method );
 }
@@ -59,25 +71,15 @@ addRegularDrawmodeChangeEvent(rectangleButton, 'rectangle');
 addRegularDrawmodeChangeEvent(circleButton, 'circle');
 addRegularDrawmodeChangeEvent(textButton, 'text');
 addRegularDrawmodeChangeEvent(eraserButton, 'eraser');
-// addDrawModeChangeEvent(
-//     resetButton,
-//     function() {
-//         drawMode = 'reset';
-//         ctx.clearRect(0, 0, canvas.width, canvas.height);
-//         console.log("reset");
-//     }
-// );
-
-// io.on('onreset', () => {
-//     ctx.clearRect(0, 0, canvas.width, canvas.height);
-// })
-// resetButton.addEventListener('click', function() {
-//     drawMode = 'reset';
-//     ctx.clearRect(0, 0, canvas.width, canvas.height);
-//     console.log("reset");
-//     io.emit('reset', {})
-// });
-
+addDrawModeChangeEvent(
+    resetButton,
+    function () {
+        drawMode = 'reset';
+        console.log("reset");
+        reset();
+        io.emit('reset', {});
+    }
+);
 
 
 /*
@@ -91,6 +93,7 @@ io.on('ondrawRect', ({x, y, width, height}) => drawRectangle(x, y, width, height
 io.on('ondrawCirc', ({centerX, centerY, radius}) => drawCircle(centerX, centerY, radius))
 io.on('onwriteText', ({txt,x,y}) => writeText(txt, x, y))
 io.on('oneraser', ({x,y}) => erase(x,y))
+io.on('onreset', () => reset())
 
 
 function drawLine(x, y) {
@@ -117,6 +120,10 @@ function erase(x, y) {
     ctx.fill();
     ctx.globalCompositeOperation = 'source-over'; // 恢复混合模式
 }
+function reset() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();  // clear previous path
+}
 
 /*
 =======================
@@ -127,7 +134,7 @@ window.onmousedown = (e) => {
     x = e.clientX - rect.left;
     y = e.clientY - rect.top;
     ctx.moveTo(x, y);
-    io.emit('down', {x, y});
+    io.emit('down', { x, y });
     pressed = true;
 
     console.log('pressing down', 'for', {x, y});
@@ -216,12 +223,12 @@ const textTool = {
         ctx.textAlign = 'left';
         ctx.font = font;
         ctx.fillText(txt, x - 4, y - 4);
-        io.emit('writeText', {txt, x, y})
+        io.emit('writeText', { txt, x, y })
     },
 };
 
 // 文本框
-canvas.onclick = function(e) {
+canvas.onclick = function (e) {
     if (drawMode == 'text') {
         if (textTool.hasInput) return;
         x = e.clientX - rect.left;
