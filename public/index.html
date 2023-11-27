@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>whiteBoard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css"/>
     <style>
         body {
             display: flex;
@@ -16,10 +17,19 @@
             margin: 0;
         }
 
-        .boardCanvas {
+        #stack {
             border: 3px solid #000;
             border-radius: 5px;
-            /* 圆角 */
+                    /* 圆角 */
+            position: relative;
+            width: 90vw;
+            height: 90vw;
+        }
+
+        #stack > canvas.boardCanvas {
+            position:absolute;
+            left:0;
+            top:0;
         }
 
         .button {
@@ -61,7 +71,9 @@
 </head>
 
 <body>
-    <canvas id="board" class="boardCanvas"></canvas>
+    <div id="stack">
+        <canvas id="board" class="boardCanvas"></canvas>
+    </div>
     <div>
         <button id="pencilButton" class="button selected">Pencil</button>
         <button id="rectangleButton" class="button">Rectangle</button>
@@ -69,9 +81,12 @@
         <button id="textButton" class="button">Text</button>
         <button id="resetButton" class="button">Reset</button>
         <button id="eraserButton" class="button">Eraser</button>
+        <div class="color-picker"></div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="./script.js"></script>
+    <script src="./picker.js"></script>
 </body>
 
 </html>
