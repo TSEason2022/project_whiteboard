@@ -1,7 +1,7 @@
 let canvas = document.getElementById('board');
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = 0.9 * window.innerWidth;
+canvas.height = 0.9 * window.innerHeight;
 let ctx = canvas.getContext("2d");
 
 var io = io().connect('http://localhost:8080')
@@ -13,7 +13,6 @@ init webpage buttons
 ====================
 */
 const getButton = btt => document.getElementById(btt);
-
 let pencilButton = getButton('pencilButton');
 let rectangleButton = getButton('rectangleButton');
 let circleButton = getButton('circleButton');
@@ -41,44 +40,57 @@ let rect = canvas.getBoundingClientRect();
 addEventListner for buttons
 ===========================
 */
+document.addEventListener('DOMContentLoaded', function () {
+    let buttons = document.querySelectorAll('.button');
+    buttons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            buttons.forEach(function (btn) {
+                btn.classList.remove('selected');
+            });
+            this.classList.add('selected');
+        });
+    });
+});
+
 function addDrawModeChangeEvent(btt, method) {
-    btt.addEventListener('click', function() {
+    btt.addEventListener('click', function () {
         method;
     });
 }
 function addRegularDrawmodeChangeEvent(btt, bttMode) {
     addDrawModeChangeEvent(
         btt,
-        function() {
+        function () {
             drawMode = bttMode;
             console.log(bttMode);
         }
     );
 }
+
 addRegularDrawmodeChangeEvent(pencilButton, 'pencil');
 addRegularDrawmodeChangeEvent(rectangleButton, 'rectangle');
 addRegularDrawmodeChangeEvent(circleButton, 'circle');
 addRegularDrawmodeChangeEvent(textButton, 'text');
 addRegularDrawmodeChangeEvent(eraserButton, 'eraser');
-// addDrawModeChangeEvent(
-//     resetButton,
-//     function() {
-//         drawMode = 'reset';
-//         ctx.clearRect(0, 0, canvas.width, canvas.height);
-//         console.log("reset");
-//     }
-// );
+addDrawModeChangeEvent(
+    resetButton,
+    function () {
+        drawMode = 'reset';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();  // clear previous path
+        console.log("reset");
+    }
+);
 
-// io.on('onreset', () => {
-//     ctx.clearRect(0, 0, canvas.width, canvas.height);
-// })
-// resetButton.addEventListener('click', function() {
-//     drawMode = 'reset';
-//     ctx.clearRect(0, 0, canvas.width, canvas.height);
-//     console.log("reset");
-//     io.emit('reset', {})
-// });
-
+io.on('onreset', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+})
+resetButton.addEventListener('click', function () {
+    drawMode = 'reset';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    console.log("reset");
+    io.emit('reset', {})
+});
 
 
 /*
@@ -86,12 +98,12 @@ addRegularDrawmodeChangeEvent(eraserButton, 'eraser');
 add handlers for io event
 =========================
 */
-io.on('ondown', ({x, y}) => { ctx.moveTo(x, y); })
+io.on('ondown', ({ x, y }) => { ctx.moveTo(x, y); })
 io.on('ondrawLine', drawLine(x, y))
 io.on('ondrawRect', drawRectangle(x, y, width, height))
 io.on('ondrawCirc', drawCircle(centerX, centerY, radius))
 io.on('onwriteText', writeText(txt, x, y))
-io.on('oneraser', erase(x,y))
+io.on('oneraser', erase(x, y))
 
 
 function drawLine(x, y) {
@@ -128,13 +140,13 @@ window.onmousedown = (e) => {
     x = e.clientX - rect.left;
     y = e.clientY - rect.top;
     ctx.moveTo(x, y);
-    io.emit('down', {x, y});
+    io.emit('down', { x, y });
     pressed = true;
     switch (drawMode) {
         case 'eraser':
             eraserMode = true;
-            erase(x,y);
-            io.emit('eraser', {x, y});
+            erase(x, y);
+            io.emit('eraser', { x, y });
     }
 }
 window.onmouseup = (e) => {
@@ -145,13 +157,13 @@ window.onmouseup = (e) => {
             width = e.clientX - rect.left - x;
             height = e.clientY - rect.top - y;
             drawRectangle(x, y, width, height);
-            io.emit('drawRect', {x, y, width, height});
+            io.emit('drawRect', { x, y, width, height });
         case 'circle':
             var centerX = (e.clientX - rect.left + x) / 2;
             var centerY = (e.clientY - rect.top + y) / 2;
             radius = Math.sqrt(Math.pow(e.clientX - rect.left - centerX, 2) + Math.pow(e.clientY - rect.top - centerY, 2));
             drawCircle(centerX, centerY, radius);
-            io.emit('drawCirc', {centerX, centerY, radius});
+            io.emit('drawCirc', { centerX, centerY, radius });
     }
 }
 window.onmousemove = (e) => {
@@ -161,11 +173,11 @@ window.onmousemove = (e) => {
         case 'pencil':
             if (pressed != true) return;
             drawLine(x, y);
-            io.emit('drawLine', {x, y})
+            io.emit('drawLine', { x, y })
         case 'eraser':
             if (eraserMode != true) return;
-            erase(x,y);
-            io.emit('eraser', {x, y});
+            erase(x, y);
+            io.emit('eraser', { x, y });
     }
 };
 
@@ -208,12 +220,12 @@ const textTool = {
         ctx.textAlign = 'left';
         ctx.font = font;
         ctx.fillText(txt, x - 4, y - 4);
-        io.emit('writeText', {txt, x, y})
+        io.emit('writeText', { txt, x, y })
     },
 };
 
 // 文本框
-canvas.onclick = function(e) {
+canvas.onclick = function (e) {
     if (drawMode == 'text') {
         if (textTool.hasInput) return;
         x = e.clientX - rect.left;
