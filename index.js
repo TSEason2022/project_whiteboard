@@ -14,11 +14,12 @@ let connections = []
 io.on('connection', (socket) => {
     connections.push(socket);
     console.log(`${socket.id} has connected`);
+    socket.emit('onconnect', {id: socket.id})
 
     socket.on('down', (data) => {
         connections.forEach((con) => {
             if (con.id !== socket.id) {
-                con.emit('ondown', {x: data.x, y: data.y});
+                con.emit('ondown', {x: data.x, y: data.y, id: socket.id});
             }
         });
     });
@@ -26,7 +27,7 @@ io.on('connection', (socket) => {
     socket.on('drawLine', (data) => {
         connections.forEach((con) => {
             if (con.id !== socket.id) {
-                con.emit('ondrawLine', {x: data.x, y: data.y});
+                con.emit('ondrawLine', {x: data.x, y: data.y, id: socket.id});
             }
         });
     });
@@ -34,7 +35,7 @@ io.on('connection', (socket) => {
     socket.on('drawRect', (data) => {
         connections.forEach((con) => {
             if (con.id !== socket.id) {
-                con.emit('ondrawRect', {x: data.x, y: data.y, width: data.width, height: data.height});
+                con.emit('ondrawRect', {x: data.x, y: data.y, width: data.width, height: data.height, id:socket.id});
             }
         });
     });
@@ -42,7 +43,7 @@ io.on('connection', (socket) => {
     socket.on('drawCirc', (data) => {
         connections.forEach((con) => {
             if (con.id !== socket.id) {
-                con.emit('ondrawCirc', {centerX: data.centerX, centerY: data.centerY, radius: data.radius});
+                con.emit('ondrawCirc', {centerX: data.centerX, centerY: data.centerY, radius: data.radius, id:socket.id});
             }
         });
     });
@@ -50,7 +51,7 @@ io.on('connection', (socket) => {
     socket.on('writeText', (data) => {
         connections.forEach((con) => {
             if (con.id !== socket.id) {
-                con.emit('onwriteText', {txt: data.txt, x: data.x, y: data.y});
+                con.emit('onwriteText', {txt: data.txt, x: data.x, y: data.y, id:socket.id});
             }
         });
     });
@@ -67,6 +68,14 @@ io.on('connection', (socket) => {
         connections.forEach((con) => {
             if (con.id !== socket.id) {
                 con.emit('onreset');
+            }
+        });
+    });
+
+    socket.on('pickColor', (data) => {
+        connections.forEach((con) => {
+            if (con.id !== socket.id) {
+                con.emit('onpickColor', {color: data.cur_color, id:socket.id});
             }
         });
     });
