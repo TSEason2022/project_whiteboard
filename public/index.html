@@ -19,7 +19,11 @@
         .boardCanvas {
             border: 3px solid #000;
             border-radius: 5px;
-            /* 圆角 */
+        }
+
+        .secondCanvas {
+            position: absolute;
+            top: 2.5%;
         }
 
         .button {
@@ -62,6 +66,7 @@
 
 <body>
     <canvas id="board" class="boardCanvas"></canvas>
+    <canvas id="animation" class="secondCanvas"></canvas>
     <div>
         <button id="pencilButton" class="button selected">Pencil</button>
         <button id="rectangleButton" class="button">Rectangle</button>
