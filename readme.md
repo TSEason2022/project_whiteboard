@@ -5,3 +5,5 @@ Use the below command to run
 ```bash
 npm run dev
 ```
+
+project details: [click here](docs/project.md)
