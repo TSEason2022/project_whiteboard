@@ -1,8 +1,10 @@
 let canvas = document.getElementById('board');
 
-canvas.width = 0.8 * window.innerWidth;
-canvas.height = 0.8 * window.innerHeight;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 let ctx = canvas.getContext("2d");
+
+var io = io().connect('http://localhost:8080')
 
 let pencilButton = document.getElementById('pencilButton');
 let rectangleButton = document.getElementById('rectangleButton');
@@ -33,19 +35,22 @@ textButton.addEventListener('click', function() {
     console.log("text");
 });
 
-resetButton.addEventListener('click', function() {
-    drawMode = 'reset';
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    console.log("reset");
-});
-
 eraserButton.addEventListener('click', function() {
     drawMode = 'eraser';
     console.log("eraser");
+
 });
 
-// 接下来在对应的鼠标事件中根据 drawMode 执行不同的绘制操作
-// 例如，在 mousemove 事件中添加判断以执行不同的绘制逻辑
+// io.on('onreset', () => {
+//     ctx.clearRect(0, 0, canvas.width, canvas.height);
+// })
+// resetButton.addEventListener('click', function() {
+//     drawMode = 'reset';
+//     ctx.clearRect(0, 0, canvas.width, canvas.height);
+//     console.log("reset");
+//     io.emit('reset', {})
+// });
+
 let x;
 let y;
 let pressed = false;
@@ -53,6 +58,42 @@ let width;
 let height;
 let radius;
 const font = '14px sans-serif';
+let rect = canvas.getBoundingClientRect();
+
+// // 直线
+// io.on('ondown', ({x, y}) => {
+//     ctx.moveTo(x, y);
+// })
+
+// window.onmousedown = (e) => {
+//     x = e.clientX;
+//     y = e.clientY;
+//     ctx.moveTo(x, y);
+//     io.emit('down', {x, y});
+//     pressed = true;
+// }
+
+// window.onmouseup = (e) => {
+//     pressed = false;
+// }
+
+// // 让别人看到
+// io.on('ondraw', ({x, y}) => {
+//     ctx.lineTo(x, y);
+//     ctx.stroke();
+// })
+
+// window.onmousemove = (e) => {
+//     x = e.clientX;
+//     y = e.clientY;
+//     console.log({x, y});
+//     if (pressed == true) {
+//         io.emit('draw', {x, y})
+//         // 让自己看到
+//         ctx.lineTo(x, y);
+//         ctx.stroke();
+//     }
+// };
 
 function drawRectangle(x, y, width, height) {
     ctx.beginPath();
@@ -100,66 +141,105 @@ const textTool = {
         ctx.textAlign = 'left';
         ctx.font = font;
         ctx.fillText(txt, x - 4, y - 4);
+        io.emit('writeText', {txt, x, y})
     },
 };
 
 
-window.onmousedown = (e) => {
-    x = e.clientX;
-    y = e.clientY;
+io.on('ondown', ({x, y}) => {
     ctx.moveTo(x, y);
+})
+io.on('oneraser', ({x, y}) => {
+    ctx.globalCompositeOperation = 'destination-out'; // 设置混合模式为destination-out，即删除模式
+    ctx.beginPath();
+    ctx.arc(x, y, 30, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over'; // 恢复混合模式
+})
+window.onmousedown = (e) => {
+    x = e.clientX - rect.left;
+    y = e.clientY - rect.top;
+    ctx.moveTo(x, y);
+    io.emit('down', {x, y});
     pressed = true;
 
     if (drawMode === 'eraser') {
         eraserMode = true;
+        x = e.clientX - rect.left;
+        y = e.clientY - rect.top;
         ctx.globalCompositeOperation = 'destination-out'; // 设置混合模式为destination-out，即删除模式
         ctx.beginPath();
-        ctx.arc(x, y, 10, 0, Math.PI * 2);
+        ctx.arc(x, y, 30, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalCompositeOperation = 'source-over'; // 恢复混合模式
+        io.emit('eraser', {x, y});
     }
 }
+
+io.on('ondrawRect', ({x, y, width, height}) => {
+    drawRectangle(x, y, width, height);
+})
+io.on('ondrawCirc', ({centerX, centerY, radius}) => {
+    drawCircle(centerX, centerY, radius);
+})
 
 window.onmouseup = (e) => {
     pressed = false;
     eraserMode = false;
     if (drawMode == 'rectangle') {
-        drawRectangle(x, y, e.clientX - x, e.clientY - y);
+        width = e.clientX - rect.left - x;
+        height = e.clientY - rect.top - y;
+        drawRectangle(x, y, width, height);
+        io.emit('drawRect', {x, y, width, height});
     }
     if (drawMode == 'circle') {
-        const centerX = (e.clientX + x) / 2;
-        const centerY = (e.clientY + y) / 2;
-        const radius = Math.sqrt(Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2));
+        var centerX = (e.clientX - rect.left + x) / 2;
+        var centerY = (e.clientY - rect.top + y) / 2;
+        radius = Math.sqrt(Math.pow(e.clientX - rect.left - centerX, 2) + Math.pow(e.clientY - rect.top - centerY, 2));
         drawCircle(centerX, centerY, radius);
+        io.emit('drawCirc', {centerX, centerY, radius});
     }
 }
 
+io.on('ondrawLine', ({x, y}) => {
+    ctx.lineTo(x, y);
+    ctx.stroke();
+})
+
 window.onmousemove = (e) => {
     if (drawMode == 'pencil') {    
-        x = e.clientX;
-        y = e.clientY;
+        x = e.clientX - rect.left;
+        y = e.clientY - rect.top;
         // console.log({x, y});
         if (pressed == true) {
+            io.emit('drawLine', {x, y})
             ctx.lineTo(x, y);
             ctx.stroke();
         }
     }
 
     if (drawMode === 'eraser' && eraserMode) {
-        x = e.clientX;
-        y = e.clientY;
+        x = e.clientX - rect.left;
+        y = e.clientY - rect.top;
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
         ctx.arc(x, y, 30, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalCompositeOperation = 'source-over';
+        io.emit('eraser', {x, y});
     }
 };
+
+io.on('onwriteText', ({txt, x, y}) => {
+    ctx.fillText(txt, x - 4, y - 4);
+})
 
 // 文本框
 canvas.onclick = function(e) {
     if (drawMode == 'text') {
         if (textTool.hasInput) return;
-        textTool.addInput(e.clientX, e.clientY);
+        x = e.clientX - rect.left;
+        y = e.clientY - rect.top;;
+        textTool.addInput(x, y);
     }
 }
