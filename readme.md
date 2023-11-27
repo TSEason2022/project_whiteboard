@@ -7,3 +7,5 @@ npm run dev
 ```
 
 project details: [click here](docs/project.md)
+
+todos: [click here](docs/todo.md)
