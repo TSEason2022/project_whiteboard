@@ -12,14 +12,14 @@ var io = io().connect('http://localhost:8080')
 init webpage buttons
 ====================
 */
-const getButton = btt => document.getElementById(btt);
+let getButton = btt => document.getElementById(btt);
 
 let pencilButton = getButton('pencilButton');
 let rectangleButton = getButton('rectangleButton');
 let circleButton = getButton('circleButton');
 let textButton = getButton('textButton');
-let resetButton = getButton('resetButton');
 let eraserButton = getButton('eraserButton');
+// let resetButton = getButton('resetButton');
 
 
 /*
@@ -38,23 +38,22 @@ let rect = canvas.getBoundingClientRect();
 
 /*
 ===========================
-addEventListner for buttons
+addClickEventListner for buttons
 ===========================
 */
 function addDrawModeChangeEvent(btt, method) {
-    btt.addEventListener('click', function() {
-        method;
-    });
+    btt.addEventListener('click', method );
 }
 function addRegularDrawmodeChangeEvent(btt, bttMode) {
     addDrawModeChangeEvent(
         btt,
-        function() {
+        () => {
             drawMode = bttMode;
-            console.log(bttMode);
+            console.log('drawMode change to', bttMode);
         }
     );
 }
+
 addRegularDrawmodeChangeEvent(pencilButton, 'pencil');
 addRegularDrawmodeChangeEvent(rectangleButton, 'rectangle');
 addRegularDrawmodeChangeEvent(circleButton, 'circle');
@@ -87,11 +86,11 @@ add handlers for io event
 =========================
 */
 io.on('ondown', ({x, y}) => { ctx.moveTo(x, y); })
-io.on('ondrawLine', drawLine(x, y))
-io.on('ondrawRect', drawRectangle(x, y, width, height))
-io.on('ondrawCirc', drawCircle(centerX, centerY, radius))
-io.on('onwriteText', writeText(txt, x, y))
-io.on('oneraser', erase(x,y))
+io.on('ondrawLine', ({x,y}) => drawLine(x, y))
+io.on('ondrawRect', ({x, y, width, height}) => drawRectangle(x, y, width, height))
+io.on('ondrawCirc', ({centerX, centerY, radius}) => drawCircle(centerX, centerY, radius))
+io.on('onwriteText', ({txt,x,y}) => writeText(txt, x, y))
+io.on('oneraser', ({x,y}) => erase(x,y))
 
 
 function drawLine(x, y) {
@@ -130,11 +129,14 @@ window.onmousedown = (e) => {
     ctx.moveTo(x, y);
     io.emit('down', {x, y});
     pressed = true;
+
+    console.log('pressing down', 'for', {x, y});
     switch (drawMode) {
         case 'eraser':
             eraserMode = true;
             erase(x,y);
             io.emit('eraser', {x, y});
+            break;
     }
 }
 window.onmouseup = (e) => {
@@ -146,26 +148,32 @@ window.onmouseup = (e) => {
             height = e.clientY - rect.top - y;
             drawRectangle(x, y, width, height);
             io.emit('drawRect', {x, y, width, height});
+            break;
         case 'circle':
             var centerX = (e.clientX - rect.left + x) / 2;
             var centerY = (e.clientY - rect.top + y) / 2;
             radius = Math.sqrt(Math.pow(e.clientX - rect.left - centerX, 2) + Math.pow(e.clientY - rect.top - centerY, 2));
             drawCircle(centerX, centerY, radius);
             io.emit('drawCirc', {centerX, centerY, radius});
+            break;
     }
 }
 window.onmousemove = (e) => {
-    x = e.clientX - rect.left;
-    y = e.clientY - rect.top;
     switch (drawMode) {
         case 'pencil':
-            if (pressed != true) return;
+            x = e.clientX - rect.left;
+            y = e.clientY - rect.top;
+            if (pressed != true) break;
             drawLine(x, y);
             io.emit('drawLine', {x, y})
+            break;
         case 'eraser':
-            if (eraserMode != true) return;
+            x = e.clientX - rect.left;
+            y = e.clientY - rect.top;
+            if (eraserMode != true) break;
             erase(x,y);
             io.emit('eraser', {x, y});
+            break;
     }
 };
 
