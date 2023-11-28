@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>whiteBoard</title>
+    <link rel="stylesheet" href="./paint.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" />
+</head>
+
+<body>
+    <div id="stack">
+        <canvas id="board" class="boardCanvas"></canvas>
+        <canvas id="animation" class="secondCanvas"></canvas>
+    </div>
+    <div class="container">
+        <div class="color-picker"></div>
+        <button id="pencilButton" class="button selected">笔</button>
+        <button id="rectangleButton" class="button">矩形</button>
+        <button id="circleButton" class="button">圆形</button>
+        <button id="textButton" class="button">文本</button>
+        <button id="eraserButton" class="button">橡皮</button>
+        <button id="resetButton" class="button">重置画布</button>
+        <button id="inviteCodeDisplay" class="button" style="margin-left: 50px;" onclick="code()"></button>
+        <button class="button" onclick="quit()">退出</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="./script.js"></script>
+    <script src="./picker.js"></script>
+</body>
+
+</html>
