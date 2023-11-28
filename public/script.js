@@ -219,6 +219,10 @@ function circleAnimation(centerX, centerY, radius) {
 }
 
 function writeText(ctx, txt, x, y) {
+    // 在其他人的画布上字体显示的一样
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+    ctx.font = 'italic bold 20px Arial, sans-serif';
     ctx.fillText(txt, x - 4, y - 4);
     console.log("Text Written in context", ctx)
 }
@@ -231,7 +235,7 @@ function ctxerase(ctx, x, y) {
 }
 function erase(x, y) {
     ctxerase(localCTX, x, y);
-    for (let iCTX of remoteCtxMap.values()) {
+    for(let iCTX of remoteCtxMap.values()) {
         ctxerase(iCTX, x, y);
     }
 }
@@ -243,14 +247,14 @@ function ctxreset(ctx) {
 function reset() {
     ctxreset(localCTX);
     ctxreset(animationCTX);
-    for (let iCTX of remoteCtxMap.values()) {
+    for(let iCTX of remoteCtxMap.values()) {
         ctxreset(iCTX);
     }
 }
 function pickColor(ctx, color) {
     ctx.beginPath()
     ctx.strokeStyle = color;
-    ctx.color = color;
+    localCTX.color = color;
     console.log("Color", color, "Picked in context", ctx)
 }
 
@@ -265,14 +269,14 @@ window.onmousedown = (e) => {
     let x = localBoard.x; let y = localBoard.y;
 
     localCTX.moveTo(x, y);
-    io.emit('down', { x, y, receivedInviteCode });
+    io.emit('down', { x, y });
     localBoard.pressed = true;
 
     switch (localBoard.drawMode) {
         case 'eraser': {
             localBoard.eraserMode = true;
-            erase(localCTX, x, y);
-            io.emit('eraser', { x, y, receivedInviteCode });
+            erase(localCTX,x,y);
+            io.emit('eraser', {x, y});
             break;
         }
     }
@@ -289,7 +293,7 @@ window.onmouseup = (e) => {
 
             drawRectangle(localCTX, x, y, width, height);
             ctxclear(animationCTX);
-            io.emit('drawRect', { x, y, width, height, receivedInviteCode });
+            io.emit('drawRect', {x, y, width, height});
             break;
         }
         case 'circle': {
@@ -301,7 +305,7 @@ window.onmouseup = (e) => {
 
             drawCircle(localCTX, centerX, centerY, radius);
             ctxclear(animationCTX);
-            io.emit('drawCirc', { centerX, centerY, radius, receivedInviteCode });
+            io.emit('drawCirc', {centerX, centerY, radius});
             break;
         }
     }
@@ -314,7 +318,7 @@ window.onmousemove = (e) => {
             if (localBoard.pressed != true) break;
             let x = localBoard.x; let y = localBoard.y;
             drawLine(localCTX, x, y);
-            io.emit('drawLine', { x, y, receivedInviteCode })
+            io.emit('drawLine', {x, y})
             break;
         }
         case 'eraser': {
@@ -322,18 +326,18 @@ window.onmousemove = (e) => {
             localBoard.y = e.clientY - localBoard.rect.top;
             if (localBoard.eraserMode != true) break;
             let x = localBoard.x; let y = localBoard.y;
-            erase(x, y);
-            io.emit('eraser', { x, y, receivedInviteCode });
+            erase(x,y);
+            io.emit('eraser', {x, y});
             break;
         }
-        case 'rectangle': {
+        case 'rectangle':{
             if (localBoard.pressed != true) break;
             localBoard.width = e.clientX - localBoard.rect.left - localBoard.x;
             localBoard.height = e.clientY - localBoard.rect.top - localBoard.y;
             let x = localBoard.x; let y = localBoard.y;
             let width = localBoard.width; let height = localBoard.height;
 
-            rectangleAnimation(x, y, width, height, receivedInviteCode);
+            rectangleAnimation(x, y, width, height);
             break;
         }
         case 'circle': {
@@ -387,18 +391,20 @@ const textTool = {
     drawText(txt, x, y) {
         localCTX.textBaseline = 'top';
         localCTX.textAlign = 'left';
-        localCTX.font = font;
+        // 换了字体
+        localCTX.font = 'italic bold 20px Arial, sans-serif';
         localCTX.fillText(txt, x - 4, y - 4);
         io.emit('writeText', { txt, x, y })
     },
 };
 
 // 文本框
-localBoard.onclick = function (e) {
-    if (localBoard.drawMode == 'text') {
+// 换成 window.onclick，且 e.target.id !== 'textButton'
+window.onclick = function (e) {
+    if (localBoard.drawMode == 'text' && e.target.id !== 'textButton') {
         if (textTool.hasInput) return;
-        x = e.clientX - rect.left;
-        y = e.clientY - rect.top;;
+        x = e.clientX - localBoard.rect.left;
+        y = e.clientY - localBoard.rect.top;
         textTool.addInput(x, y);
     }
 }
