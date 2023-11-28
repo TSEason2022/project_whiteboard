@@ -49,7 +49,7 @@ init board
 // local board settings
 let localBoard = new iBoard(document.getElementById('board'), 'board');
 let localCTX = localBoard.ctx;
-let animationBoard = new iBoard(document.getElementById('animation', 'animation'));
+let animationBoard = new iBoard(document.getElementById('animation'), 'animation');
 let animationCTX = animationBoard.ctx;
 
 // init reserved for remote canvas
@@ -149,7 +149,7 @@ io.on('onwriteText', ({txt,x,y,id}) => {
 })
 io.on('oneraser', ({x,y}) => erase(x,y))
 io.on('onreset', () => reset())
-io.on('onpickColor', ({color,id}) => {
+io.on('onpickColor', ({color, id}) => {
     handleByCavnasID( id, (ctx) => {pickColor(ctx, color); })
 })
 
@@ -227,7 +227,7 @@ function reset() {
 function pickColor(ctx, color) {
     ctx.beginPath()
     ctx.strokeStyle = color;
-    localCTX.color = color;
+    ctx.color = color;
     console.log("Color", color, "Picked in context", ctx)
 }
 
