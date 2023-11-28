@@ -50,7 +50,7 @@ init board
 let localBoard = new iBoard(document.getElementById('board'), 'board');
 let localCTX = localBoard.ctx;
 let animationBoard = new iBoard(document.getElementById('animation', 'animation'));
-let ctx2 = animationBoard.ctx;
+let animationCTX = animationBoard.ctx;
 
 // init reserved for remote canvas
 // one board has only one 2D ctx and one canvas
@@ -171,12 +171,12 @@ function drawRectangle(ctx, x, y, width, height) {
     console.log("Rect drawed in context", ctx)
 }
 function rectangleAnimation(x, y, width, height) {
-    ctx2.beginPath();
-    ctx2.lineWidth = 2;
-    ctx2.rect(x, y, width, height);
-    ctxclear(ctx2);
-    ctx2.strokeStyle = localCTX.color;
-    ctx2.stroke();
+    animationCTX.beginPath();
+    animationCTX.lineWidth = 2;
+    animationCTX.rect(x, y, width, height);
+    ctxclear(animationCTX);
+    animationCTX.strokeStyle = localCTX.color;
+    animationCTX.stroke();
 }
 
 function drawCircle(ctx, centerX, centerY, radius) {
@@ -187,12 +187,12 @@ function drawCircle(ctx, centerX, centerY, radius) {
     console.log("Circle drawed in context", ctx)
 }
 function circleAnimation(centerX, centerY, radius) {
-    ctx2.beginPath();
-    ctx2.lineWidth = 2;
-    ctx2.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-    ctxclear(ctx2);
-    ctx2.strokeStyle = localCTX.color;
-    ctx2.stroke();
+    animationCTX.beginPath();
+    animationCTX.lineWidth = 2;
+    animationCTX.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctxclear(animationCTX);
+    animationCTX.strokeStyle = localCTX.color;
+    animationCTX.stroke();
 }
 
 function writeText(ctx, txt, x, y) {
@@ -219,7 +219,7 @@ function ctxreset(ctx) {
 }
 function reset() {
     ctxreset(localCTX);
-    ctxreset(ctx2);
+    ctxreset(animationCTX);
     for(let iCTX of remoteCtxMap.values()) {
         ctxreset(iCTX);
     }
@@ -265,7 +265,7 @@ window.onmouseup = (e) => {
             let width = localBoard.width; let height = localBoard.height;
 
             drawRectangle(localCTX, x, y, width, height);
-            ctxclear(ctx2);
+            ctxclear(animationCTX);
             io.emit('drawRect', {x, y, width, height});
             break;
         }
@@ -277,7 +277,7 @@ window.onmouseup = (e) => {
             let radius = localBoard.radius;
 
             drawCircle(localCTX, centerX, centerY, radius);
-            ctxclear(ctx2);
+            ctxclear(animationCTX);
             io.emit('drawCirc', {centerX, centerY, radius});
             break;
         }
