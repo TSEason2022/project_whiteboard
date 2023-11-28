@@ -46,6 +46,11 @@ init board
 ===========
 */
 
+const receivedInviteCode = localStorage.getItem('inviteCode');
+document.getElementById('inviteCodeDisplay').innerText = "邀请码: " + receivedInviteCode;
+
+io.emit('onCanvas', { receivedInviteCode });
+
 // local board settings
 let localBoard = new iBoard(document.getElementById('board'), 'board');
 let localCTX = localBoard.ctx;
@@ -63,14 +68,17 @@ addClickEventListner for buttons
 ===========================
 */
 document.addEventListener('DOMContentLoaded', function () {
+    buttonLst = [pencilButton, rectangleButton, circleButton, textButton, eraserButton, resetButton];
     let buttons = document.querySelectorAll('.button');
     buttons.forEach(function (button) {
-        button.addEventListener('click', function () {
-            buttons.forEach(function (btn) {
-                btn.classList.remove('selected');
+        if (buttonLst.includes(button)) {
+            button.addEventListener('click', function () {
+                buttons.forEach(function (btn) {
+                    btn.classList.remove('selected');
+                });
+                this.classList.add('selected');
             });
-            this.classList.add('selected');
-        });
+        }
     });
 });
 
@@ -99,10 +107,25 @@ addDrawModeChangeEvent(
         localBoard.drawMode = 'reset';
         console.log("reset");
         reset();
-        io.emit('reset', {});
+        io.emit('reset', { receivedInviteCode });
     }
 );
 
+// copy invite code
+function code() {
+    navigator.clipboard.writeText(receivedInviteCode)
+        .then(() => {
+            console.log('Text successfully copied to clipboard');
+        })
+        .catch(err => {
+            console.error('Unable to copy text to clipboard', err);
+        });
+}
+
+// quit
+function quit() {
+    window.location.href = "./index.html";
+}
 
 /*
 =========================
@@ -128,29 +151,29 @@ let handleByCavnasID = (id, handleContent) => {
     }
 }
 
-io.on('onconnect', ({id}) => {
+io.on('onconnect', ({ id }) => {
     localBoard.canvas.id = id;
     console.log("current board canvas is", localBoard.canvas);
 })
-io.on('ondown', ({x, y, id}) => {
-    handleByCavnasID( id, (ctx) => {ctx.moveTo(x, y); })
+io.on('ondown', ({ x, y, id }) => {
+    handleByCavnasID(id, (ctx) => { ctx.moveTo(x, y); })
 })
-io.on('ondrawLine', ({x,y,id}) => {
-    handleByCavnasID( id, (ctx) => {drawLine(ctx, x, y); })
+io.on('ondrawLine', ({ x, y, id }) => {
+    handleByCavnasID(id, (ctx) => { drawLine(ctx, x, y); })
 })
-io.on('ondrawRect', ({x, y, width, height, id}) => {
-    handleByCavnasID( id, (ctx) => {drawRectangle(ctx, x, y, width, height); })
+io.on('ondrawRect', ({ x, y, width, height, id }) => {
+    handleByCavnasID(id, (ctx) => { drawRectangle(ctx, x, y, width, height); })
 })
-io.on('ondrawCirc', ({centerX, centerY, radius, id}) => {
-    handleByCavnasID( id, (ctx) => {drawCircle(ctx, centerX, centerY, radius); })
+io.on('ondrawCirc', ({ centerX, centerY, radius, id }) => {
+    handleByCavnasID(id, (ctx) => { drawCircle(ctx, centerX, centerY, radius); })
 })
-io.on('onwriteText', ({txt,x,y,id}) => {
-    handleByCavnasID( id, (ctx) => {writeText(ctx, txt, x, y); })
+io.on('onwriteText', ({ txt, x, y, id }) => {
+    handleByCavnasID(id, (ctx) => { writeText(ctx, txt, x, y); })
 })
-io.on('oneraser', ({x,y}) => erase(x,y))
+io.on('oneraser', ({ x, y }) => erase(x, y))
 io.on('onreset', () => reset())
-io.on('onpickColor', ({color,id}) => {
-    handleByCavnasID( id, (ctx) => {pickColor(ctx, color); })
+io.on('onpickColor', ({ color, id }) => {
+    handleByCavnasID(id, (ctx) => { pickColor(ctx, color); })
 })
 
 
@@ -208,7 +231,7 @@ function ctxerase(ctx, x, y) {
 }
 function erase(x, y) {
     ctxerase(localCTX, x, y);
-    for(let iCTX of remoteCtxMap.values()) {
+    for (let iCTX of remoteCtxMap.values()) {
         ctxerase(iCTX, x, y);
     }
 }
@@ -220,7 +243,7 @@ function ctxreset(ctx) {
 function reset() {
     ctxreset(localCTX);
     ctxreset(animationCTX);
-    for(let iCTX of remoteCtxMap.values()) {
+    for (let iCTX of remoteCtxMap.values()) {
         ctxreset(iCTX);
     }
 }
@@ -242,14 +265,14 @@ window.onmousedown = (e) => {
     let x = localBoard.x; let y = localBoard.y;
 
     localCTX.moveTo(x, y);
-    io.emit('down', { x, y });
+    io.emit('down', { x, y, receivedInviteCode });
     localBoard.pressed = true;
 
     switch (localBoard.drawMode) {
         case 'eraser': {
             localBoard.eraserMode = true;
-            erase(localCTX,x,y);
-            io.emit('eraser', {x, y});
+            erase(localCTX, x, y);
+            io.emit('eraser', { x, y, receivedInviteCode });
             break;
         }
     }
@@ -266,7 +289,7 @@ window.onmouseup = (e) => {
 
             drawRectangle(localCTX, x, y, width, height);
             ctxclear(animationCTX);
-            io.emit('drawRect', {x, y, width, height});
+            io.emit('drawRect', { x, y, width, height, receivedInviteCode });
             break;
         }
         case 'circle': {
@@ -278,7 +301,7 @@ window.onmouseup = (e) => {
 
             drawCircle(localCTX, centerX, centerY, radius);
             ctxclear(animationCTX);
-            io.emit('drawCirc', {centerX, centerY, radius});
+            io.emit('drawCirc', { centerX, centerY, radius, receivedInviteCode });
             break;
         }
     }
@@ -291,7 +314,7 @@ window.onmousemove = (e) => {
             if (localBoard.pressed != true) break;
             let x = localBoard.x; let y = localBoard.y;
             drawLine(localCTX, x, y);
-            io.emit('drawLine', {x, y})
+            io.emit('drawLine', { x, y, receivedInviteCode })
             break;
         }
         case 'eraser': {
@@ -299,18 +322,18 @@ window.onmousemove = (e) => {
             localBoard.y = e.clientY - localBoard.rect.top;
             if (localBoard.eraserMode != true) break;
             let x = localBoard.x; let y = localBoard.y;
-            erase(x,y);
-            io.emit('eraser', {x, y});
+            erase(x, y);
+            io.emit('eraser', { x, y, receivedInviteCode });
             break;
         }
-        case 'rectangle':{
+        case 'rectangle': {
             if (localBoard.pressed != true) break;
             localBoard.width = e.clientX - localBoard.rect.left - localBoard.x;
             localBoard.height = e.clientY - localBoard.rect.top - localBoard.y;
             let x = localBoard.x; let y = localBoard.y;
             let width = localBoard.width; let height = localBoard.height;
 
-            rectangleAnimation(x, y, width, height);
+            rectangleAnimation(x, y, width, height, receivedInviteCode);
             break;
         }
         case 'circle': {
