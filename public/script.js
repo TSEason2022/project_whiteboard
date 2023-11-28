@@ -129,7 +129,7 @@ let handleByCavnasID = (id, handleContent) => {
 }
 
 io.on('onconnect', ({id}) => {
-    localBoard.canvas.id = id;
+    // localBoard.canvas.id = id;
     console.log("current board canvas is", localBoard.canvas);
 })
 io.on('ondown', ({x, y, id}) => {
