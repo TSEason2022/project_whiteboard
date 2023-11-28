@@ -32,6 +32,11 @@
             top:0;
         }
 
+        #stack > canvas#animation {
+            position: absolute;
+            top: 2.5%;
+        }
+
         .button {
             margin-top: 7px;
             display: inline-block;
@@ -73,6 +78,7 @@
 <body>
     <div id="stack">
         <canvas id="board" class="boardCanvas"></canvas>
+        <canvas id="animation" class="secondCanvas"></canvas>
     </div>
     <div>
         <button id="pencilButton" class="button selected">Pencil</button>

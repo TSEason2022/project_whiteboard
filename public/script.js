@@ -18,6 +18,7 @@ class iBoard {
         this.width = null; this.height = null;
         this.radius = null;
         this.rect = this.canvas.getBoundingClientRect();
+        this.color = null;
     }
 }
 
@@ -48,6 +49,8 @@ init board
 // local board settings
 let localBoard = new iBoard(document.getElementById('board'), 'board');
 let localCTX = localBoard.ctx;
+let animationBoard = new iBoard(document.getElementById('animation', 'animation'));
+let ctx2 = animationBoard.ctx;
 
 // init reserved for remote canvas
 // one board has only one 2D ctx and one canvas
@@ -73,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 function addDrawModeChangeEvent(btt, method) {
-    btt.addEventListener('click', method );
+    btt.addEventListener('click', method);
 }
 function addRegularDrawmodeChangeEvent(btt, bttMode) {
     addDrawModeChangeEvent(
@@ -151,22 +154,47 @@ io.on('onpickColor', ({color,id}) => {
 })
 
 
+function ctxclear(ctx) {
+    ctx.clearRect(0, 0, localBoard.canvas.width, localBoard.canvas.height);
+}
+
 function drawLine(ctx, x, y) {
     ctx.lineTo(x, y);
     ctx.stroke();
 }
+
 function drawRectangle(ctx, x, y, width, height) {
     ctx.beginPath();
+    ctx.lineWidth = 2;
     ctx.rect(x, y, width, height);
     ctx.stroke();
     console.log("Rect drawed in context", ctx)
 }
+function rectangleAnimation(x, y, width, height) {
+    ctx2.beginPath();
+    ctx2.lineWidth = 2;
+    ctx2.rect(x, y, width, height);
+    ctxclear(ctx2);
+    ctx2.strokeStyle = localCTX.color;
+    ctx2.stroke();
+}
+
 function drawCircle(ctx, centerX, centerY, radius) {
     ctx.beginPath();
+    ctx.lineWidth = 2;
     ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
     ctx.stroke();
     console.log("Circle drawed in context", ctx)
 }
+function circleAnimation(centerX, centerY, radius) {
+    ctx2.beginPath();
+    ctx2.lineWidth = 2;
+    ctx2.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctxclear(ctx2);
+    ctx2.strokeStyle = localCTX.color;
+    ctx2.stroke();
+}
+
 function writeText(ctx, txt, x, y) {
     ctx.fillText(txt, x - 4, y - 4);
     console.log("Text Written in context", ctx)
@@ -184,19 +212,22 @@ function erase(x, y) {
         ctxerase(iCTX, x, y);
     }
 }
+function ctxreset(ctx) {
+    ctxclear(ctx);
+    ctx.beginPath();  // clear previous path
+    console.log("Reset in context", ctx);
+}
 function reset() {
-    localCTX.clearRect(0, 0, localBoard.canvas.width, localBoard.canvas.height);
-    localCTX.beginPath();  // clear previous path
-    console.log("Reset in local context", localCTX);
+    ctxreset(localCTX);
+    ctxreset(ctx2);
     for(let iCTX of remoteCtxMap.values()) {
-        iCTX.clearRect(0,0,localBoard.canvas.width, localBoard.canvas.height);
-        iCTX.beginPath()
-        console.log("Reset in remote context", iCTX);
+        ctxreset(iCTX);
     }
 }
 function pickColor(ctx, color) {
     ctx.beginPath()
     ctx.strokeStyle = color;
+    localCTX.color = color;
     console.log("Color", color, "Picked in context", ctx)
 }
 
@@ -234,6 +265,7 @@ window.onmouseup = (e) => {
             let width = localBoard.width; let height = localBoard.height;
 
             drawRectangle(localCTX, x, y, width, height);
+            ctxclear(ctx2);
             io.emit('drawRect', {x, y, width, height});
             break;
         }
@@ -243,7 +275,9 @@ window.onmouseup = (e) => {
             let centerY = (e.clientY - localBoard.rect.top + y) / 2;
             localBoard.radius = Math.sqrt(Math.pow(e.clientX - localBoard.rect.left - centerX, 2) + Math.pow(e.clientY - localBoard.rect.top - centerY, 2));
             let radius = localBoard.radius;
+
             drawCircle(localCTX, centerX, centerY, radius);
+            ctxclear(ctx2);
             io.emit('drawCirc', {centerX, centerY, radius});
             break;
         }
@@ -267,6 +301,27 @@ window.onmousemove = (e) => {
             let x = localBoard.x; let y = localBoard.y;
             erase(x,y);
             io.emit('eraser', {x, y});
+            break;
+        }
+        case 'rectangle':{
+            if (localBoard.pressed != true) break;
+            localBoard.width = e.clientX - localBoard.rect.left - localBoard.x;
+            localBoard.height = e.clientY - localBoard.rect.top - localBoard.y;
+            let x = localBoard.x; let y = localBoard.y;
+            let width = localBoard.width; let height = localBoard.height;
+
+            rectangleAnimation(x, y, width, height);
+            break;
+        }
+        case 'circle': {
+            if (localBoard.pressed != true) break;
+            let x = localBoard.x; let y = localBoard.y;
+            let centerX = (e.clientX - localBoard.rect.left + x) / 2;
+            let centerY = (e.clientY - localBoard.rect.top + y) / 2;
+            localBoard.radius = Math.sqrt(Math.pow(e.clientX - localBoard.rect.left - centerX, 2) + Math.pow(e.clientY - localBoard.rect.top - centerY, 2));
+            let radius = localBoard.radius;
+
+            circleAnimation(centerX, centerY, radius);
             break;
         }
     }
