@@ -32,5 +32,6 @@ pickr.on('change', (color, instance) => {
     console.log("COLOR", cur_color);
     pickColor(localCTX, cur_color)
     pickr.setColor(cur_color)
-    io.emit('pickColor', {cur_color})
+    const receivedInviteCode = localStorage.getItem('inviteCode');
+    io.emit('pickColor', {cur_color, receivedInviteCode})
 })
