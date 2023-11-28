@@ -72,7 +72,7 @@ io.on('connection', (socket) => {
 
         // redo the paint actions happened before the connection
         for(let i = 0; i < curSession.paintActions.length; i++) {
-            console.log("paintActions[",i,"]is: ", curSession.paintActions[i])
+            // console.log("paintActions[",i,"]is: ", curSession.paintActions[i])
             curSession.paintActions[i](socket, socket)
         }
         socket.emit('onpickColor', {color: "#000", id:socket.id}) // reset the color
